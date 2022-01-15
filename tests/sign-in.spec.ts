@@ -31,7 +31,6 @@ test.describe("Sign in flow", () => {
 
     test('Should successfully sign in via email link', async ({ request }) => {
         const mailHelper = new MailSac(request);
-        const dateForEmail = Date.now();
 
         await test.step('Should send email', async () => {
             await mainPage.loginModal.signInWithEmail(data.user1);
@@ -39,7 +38,7 @@ test.describe("Sign in flow", () => {
         })
 
         await test.step('Should sign in with link from email', async () => {
-            const signInLink = await mailHelper.getSignInLinkFromEmail(data.user1, dateForEmail);
+            const signInLink = await mailHelper.getSignInLinkFromEmail(data.user1, true);
             await mainPage.navigateTo(signInLink);
             expect(await mainPage.header.getLoggedInUser()).toEqual(data.user1);
         })

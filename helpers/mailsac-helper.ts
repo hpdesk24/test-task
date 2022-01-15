@@ -5,6 +5,40 @@ export class MailSac {
 
     constructor(private request: APIRequestContext) { }
 
+    // Fetch required sign-in link
+    // if `unread` provided will retry up to 6 times with SHORT_TIMEOUT delay to wait for unread email in mailbox
+    // throws error if mail is not found, sets found mail to 'read' state
+    async getSignInLinkFromEmail(mailbox: string, unread?: boolean): Promise<string> {
+        let message;
+        if (unread) {
+            message = await this.getLastMessage(mailbox, unread);
+            let retryCount = 6;
+            while (message === undefined && retryCount > 0) {
+                console.log(`Mail not yet received, retry in ${EMAIL_RETRY_TIMEOUT} ms, retry count - ${retryCount}`)
+                await new Promise(r => setTimeout(r, EMAIL_RETRY_TIMEOUT));
+                message = await this.getLastMessage(mailbox, unread);
+                retryCount--;
+            }
+        }
+        else {
+            message = await this.getLastMessage(mailbox);
+        }
+        if (message.length === 0)
+            throw Error(`No mail was found with specified parameters: ${mailbox}`)
+
+        await this.setMessageToRead(mailbox, message._id);
+        return message.links[1];
+    }
+
+    //Set message to read
+    private async setMessageToRead(mailbox: string, messageID: string): Promise<void> {
+        await this.request.put(
+            `${MAIL_API_BASEURL}/addresses/${mailbox}/messages/${messageID}/read/true`,
+            { headers: { "Mailsac-Key": process.env.MAIL_API_KEY } }
+        )
+    }
+
+    //Get all messages
     private async getAllMessagesAsJson(mailbox: string): Promise<any[]> {
         const allMessages = await this.request.get(
             `${MAIL_API_BASEURL}/addresses/${mailbox}/messages`,
@@ -13,29 +47,13 @@ export class MailSac {
         return allMessages.json()
     }
 
-    // Filter messages with required subject, and optionally received after certain date  
-    private async filterMessages(mailbox: string, date?: number): Promise<any[]> {
+    // Get last message with required subject, optionally - unread
+    private async getLastMessage(mailbox: string, unread?: boolean): Promise<any> {
         const allMessages = await this.getAllMessagesAsJson(mailbox);
         return allMessages.filter(
             (mail) => {
                 return mail.subject === 'Sign in to qa-challenge-tabeo.vercel.app'
-                    && (date ? Date.parse(mail.received) >= date : true)
-            })
-    }
-
-    // Fetch required sign-in link, will retry up to 6 times with SHORT_TIMEOUT delay to find mail
-    // throws error if mail is not found
-    async getSignInLinkFromEmail(mailbox: string, date?: number): Promise<string> {
-        let message = await this.filterMessages(mailbox, date);
-        let retryCount = 6;
-        while (message.length < 1 && retryCount > 0) {
-            console.log(`Mail not yet received, retry in ${EMAIL_RETRY_TIMEOUT} ms, retry count - ${retryCount}`)
-            await new Promise(r => setTimeout(r, EMAIL_RETRY_TIMEOUT));
-            message = await this.filterMessages(mailbox, date);
-            retryCount--;
-        }
-        if (message.length === 0)
-            throw Error(`No mail was found with specified parameters: ${mailbox} ${date}`)
-        return message[0].links[1];
+                    && (unread ? mail.read !== 'true' : true)
+            })[0]
     }
 }

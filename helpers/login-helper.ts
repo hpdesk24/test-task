@@ -7,10 +7,9 @@ import { RequestHelper } from "./request-helper";
 export async function loginViaApi(email: string, request: APIRequestContext, page: Page): Promise<void> {
     const mailSac = new MailSac(request);
     const requestHelper = new RequestHelper(request);
-    const dateForEmail = Date.now();
 
     await requestHelper.postEmailLink(email);
     await page.waitForTimeout(SHORT_TIMEOUT);
-    const singInLink = await mailSac.getSignInLinkFromEmail(email, dateForEmail);
+    const singInLink = await mailSac.getSignInLinkFromEmail(email, true);
     await page.goto(singInLink)
 }
