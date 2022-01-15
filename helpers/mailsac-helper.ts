@@ -1,5 +1,5 @@
 import { APIRequestContext } from "@playwright/test";
-import { EMAIL_RETRY_TIMEOUT, MAIL_API_BASEURL, MAIL_API_KEY } from "../data/general-data";
+import { EMAIL_RETRY_TIMEOUT, MAIL_API_BASEURL } from "../data/general-data";
 
 export class MailSac {
 
@@ -8,7 +8,7 @@ export class MailSac {
     private async getAllMessagesAsJson(mailbox: string): Promise<any[]> {
         const allMessages = await this.request.get(
             `${MAIL_API_BASEURL}/addresses/${mailbox}/messages`,
-            { headers: { "Mailsac-Key": MAIL_API_KEY } }
+            { headers: { "Mailsac-Key": process.env.MAIL_API_KEY } }
         )
         return allMessages.json()
     }
