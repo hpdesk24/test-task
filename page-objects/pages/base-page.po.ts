@@ -1,14 +1,14 @@
-import { Page } from '@playwright/test';
-import { Header } from '../elements/user-menu.po';
+import { Page } from "@playwright/test";
+import { Header } from "../elements/user-menu.po";
 
 export abstract class BasePage {
-    readonly header: Header;
+  readonly header: Header;
 
-    constructor(protected page: Page) {
-        this.header = new Header(page);
-    }
+  constructor(protected page: Page) {
+    this.header = new Header(page);
+  }
 
-    async navigateTo(url: string): Promise<void> {
-        await this.page.goto(url);
-    }
+  async navigateTo(url: string): Promise<void> {
+    await this.page.goto(url);
+  }
 }
