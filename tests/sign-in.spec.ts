@@ -24,7 +24,7 @@ test.describe("Sign in flow", () => {
     await page.locator("#identifierId").type(data.googleEmail);
     await page.locator("#identifierNext").click();
     await page.locator('input[type="password"]').waitFor();
-    await page.locator('input[type="password"]').type(data.googlePassword);
+    await page.locator('input[type="password"]').type(process.env.GOOG_PASS);
     await page.locator("#passwordNext").click();
 
     expect(await mainPage.header.getLoggedInUser()).toEqual("Pavlo ForTest");
